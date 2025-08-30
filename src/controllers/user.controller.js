@@ -11,7 +11,6 @@ const generateAccessAndRefereshTokens = async(userId) => {
         const refreshToken = user.generateRefreshToken()
 
         user.refreshToken = refreshToken
-        user.accessToken = accessToken
         await user.save({validateBeforeSave : false})
 
         return {refreshToken,accessToken}
@@ -85,12 +84,12 @@ const loginUser = asyncHandler( async (req,res) => {
     if(!(username || email))
         throw new APIError(400,"Username or Email is required");
 
-    const user = User.findOne({
+    const user = await User.findOne({
         $or: [{username},{email}] // Basically mongodb will find users on the basis of username OR email 
     })
-    
+
     if(!user)
-        return new APIError(400,"User doesnt exist")
+        throw new APIError(400,"User doesnt exist")
 
     const isPasswordValid = await user.isPasswordCorrect(password)
 
@@ -109,7 +108,7 @@ const loginUser = asyncHandler( async (req,res) => {
     return res.status(200).cookie("accessToken",accessToken,options)
     .cookie("refreshToken",refreshToken,options)
     .json(
-        APIResponse(200,
+        new APIResponse(200,
             {
                 user: loggedInUser,accessToken,refreshToken
             },
@@ -120,7 +119,7 @@ const loginUser = asyncHandler( async (req,res) => {
 })
 
 const logoutUser = asyncHandler( async(req,res) => {
-    User.findByIdAndUpdate(req.user._id,
+    await User.findByIdAndUpdate(req.user._id,
         {
             $set: {
                 refreshToken: undefined
@@ -136,7 +135,7 @@ const logoutUser = asyncHandler( async(req,res) => {
 
     return res.status(200).clearCookie("accessToken",options)
     .clearCookie("refreshToken" , options)
-    .json(200, {}, "User Logged Out")
+    .json(new APIResponse(200, {}, "User Logged Out"))
 })
 
 export { registerUser, loginUser,logoutUser }
