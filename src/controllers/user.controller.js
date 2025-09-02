@@ -24,7 +24,6 @@ const generateAccessAndRefereshTokens = async(userId) => {
 
 const registerUser = asyncHandler( async (req,res) => {
     const {fullname,username,email,password} = req.body
-    console.log('email: ' , email)
     if(
         [fullname,username,email,password].some((field) => 
         field?.trim() === "")
@@ -38,8 +37,7 @@ const registerUser = asyncHandler( async (req,res) => {
 
     if(existedUser)
         throw new APIError(409, "User with same username or email exists")
-
-    console.log(req.files)
+    
     const avatarLocalPath = req.files?.avatar[0]?.path
     // let coverLocalPath = req.files?.coverImage[0]?.path
 

@@ -8,7 +8,6 @@ import {uploadOnCloudinary} from "../utils/cloudinary.js"
 
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
-    //TODO: get all videos based on query, sort, pagination
     const filter = {};
     if (query) {
         filter.$or = [
@@ -53,8 +52,6 @@ const getAllVideos = asyncHandler(async (req, res) => {
 })
 
 const publishAVideo = asyncHandler(async (req, res) => {
-    // get video, upload to cloudinary, create video
-
     const { title, description} = req.body
     
     const video = await Video.findOne({
@@ -93,7 +90,6 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
 const getVideoById = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    //TODO: get video by id
     if(!videoId)
         throw new APIError(404, "Video Not found")
 
