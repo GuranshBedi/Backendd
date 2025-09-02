@@ -8,7 +8,7 @@ import {uploadOnCloudinary} from "../utils/cloudinary.js"
 
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
-    const filter = {};
+    const filter = {}
     if (query) {
         filter.$or = [
             { 
@@ -17,7 +17,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
             { 
                 description: { $regex: query, $options: "i" } 
             }
-        ];
+        ]
     }
     if (userId)
         filter.owner = userId
@@ -36,7 +36,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
         Video.countDocuments(filter)
     ])
 
-    const totalPages = Math.ceil(total / limit);
+    const totalPages = Math.ceil(total / limit)
 
     res.status(200).json( new APIResponse(200,{
         success: true,
@@ -61,7 +61,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
     if(!video)
         throw new APIError(404,"Video not Found")
 
-    const videoLocalPath = req.file?.videoFile.path
+    const videoLocalPath = req.files?.videoFile[0].path
     const thumbnailLocalPath = req.file?.thumbnail.path
 
     if(!videoLocalPath)
