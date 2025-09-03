@@ -8,7 +8,6 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 import { User } from "../models/user.model.js"
 
 const getChannelStats = asyncHandler(async (req, res) => {
-    // TODO: Get the channel stats like total video views, total subscribers, total videos, total likes etc.
     const userId = req.user?._id
 
     if(!userId)
@@ -17,10 +16,8 @@ const getChannelStats = asyncHandler(async (req, res) => {
     const channelDetails = await User.aggregate([
         {
             $match: {
-                userId : {
                     _id : mongoose.Types.ObjectId(userId)
                 }
-            }
         },
         {
             $lookup: {
@@ -33,7 +30,7 @@ const getChannelStats = asyncHandler(async (req, res) => {
         },
         {
             $lookup: {
-                from: "subsrciptions",
+                from: "subscriptions",
                 localField: "_id",
                 foreignField: "channel",
                 as: "subscribers"
@@ -91,7 +88,6 @@ const getChannelStats = asyncHandler(async (req, res) => {
 })
 
 const getChannelVideos = asyncHandler(async (req, res) => {
-    // TODO: Get all the videos uploaded by the channel
     const userId = req.user?._id
 
     if(!userId)
@@ -100,15 +96,13 @@ const getChannelVideos = asyncHandler(async (req, res) => {
     const getVideos = await User.aggregate([
         {
             $match: {
-                userId : {
                     _id: mongoose.Types.ObjectId(userId)
-                }
             }
         },
         {
             $lookup: {
                 from : "videos",
-                localField: "owner",
+                localField: "_id",
                 foreignField: "views",
                 as: "videos"
             },
@@ -134,7 +128,7 @@ const getChannelVideos = asyncHandler(async (req, res) => {
         throw new APIError(400,"No Videos")
 
     return res.status(200)
-    .json(new APIResponse(200,channelDetails,"User Video fetched Succesfully"))
+    .json(new APIResponse(200,getVideos,"User Video fetched Succesfully"))
 })
 
 export {

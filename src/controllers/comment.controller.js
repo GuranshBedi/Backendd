@@ -22,7 +22,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
 
     const totalComments = await Comment.countDocuments({ video: videoId });
 
-    return res.status(200).json(new APIResponse(200, totalComments , "Comments fetched successsfully"))
+    return res.status(200).json(new APIResponse(200, {comments,totalComments} , "Comments fetched successsfully"))
 
 })
 
@@ -63,7 +63,7 @@ const updateComment = asyncHandler(async (req, res) => {
         {
             new: true
         }
-    ).populate("comment")
+    )
 
     if(!comment)
         throw new APIError(400 , "comment Error")
@@ -82,7 +82,7 @@ const deleteComment = asyncHandler(async (req, res) => {
     if(!comment)
         throw new APIError(400 , "comment Error")
 
-    return res.status(200).json(new APIResponse(200,{},"Comment Deleted Successfully"))
+    return res.status(200).json(new APIResponse(200,comment,"Comment Deleted Successfully"))
 })
 
 export {

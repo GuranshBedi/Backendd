@@ -6,8 +6,8 @@ import {APIResponse} from "../utils/APIResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
 
 const createTweet = asyncHandler(async (req, res) => {
-    const { userId,content } = req.body
-
+    const { content } = req.body
+    const userId = req.user?._id
     if(!userId)
         throw new APIError(404, "User not found")
 
@@ -23,7 +23,7 @@ const createTweet = asyncHandler(async (req, res) => {
 })
 
 const getUserTweets = asyncHandler(async (req, res) => {
-    const { userId } = req.user?._id
+    const userId = req.user?._id
 
     if(!userId)
         throw new APIError(404, "User not found")
@@ -55,7 +55,7 @@ const updateTweet = asyncHandler(async (req, res) => {
 })
 
 const deleteTweet = asyncHandler(async (req, res) => {
-    const { tweetId } = req.params.tweetId
+    const { tweetId } = req.params
     if(!tweetId)
         throw new APIError(404, "Something is wrong")
 

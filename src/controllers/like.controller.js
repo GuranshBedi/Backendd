@@ -5,26 +5,21 @@ import {APIResponse} from "../utils/APIResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
 
 const toggleVideoLike = asyncHandler(async (req, res) => {
-    const {videoId} = req.params
-    if(!videoId)
-        throw new APIError(400, "Video doesnt exist")
+    const { videoId } = req.params;
+    const userId = req.user._id;
 
-    const filter = { likedBy: userId };
-    if (videoId) 
-        filter.video = videoId;
+    if (!videoId) throw new APIError(400, "Video ID is required");
 
+    const filter = { likedBy: userId, video: videoId };
     const existingLike = await Like.findOne(filter);
 
     if (existingLike) {
         await Like.findByIdAndDelete(existingLike._id);
-        return res
-            .status(200)
-            .json(new APIResponse(200, null, "Unliked successfully"));
+        return res.status(200).json(new APIResponse(200, null, "Unliked successfully"));
     }
+
     await Like.create(filter);
-    return res
-        .status(200)
-        .json(new APIResponse(200, null, "Liked successfully"));
+    return res.status(200).json(new APIResponse(200, null, "Liked successfully"));
 })
 
 const toggleCommentLike = asyncHandler(async (req, res) => {
@@ -77,7 +72,7 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 
 const getLikedVideos = asyncHandler(async (req, res) => {
     //TODO: get all liked videos
-    const { userId } = req.user._id
+    const userId  = req.user._id
 
     const likedVideos = await Like.find({
         likedBy : userId,

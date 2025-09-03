@@ -38,17 +38,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
     const totalPages = Math.ceil(total / limit)
 
-    res.status(200).json( new APIResponse(200,{
-        success: true,
-        data: videos,
-        pagination: {
-            total,
-            page: Number(page),
-            limit: Number(limit),
-            totalPages
-        }
-        
-    }),"Videos fetched Successfully")
+    res.status(200).json(new APIResponse(200,{},"Videos fetched Successfully"))
 })
 
 const publishAVideo = asyncHandler(async (req, res) => {
@@ -82,7 +72,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
         description,
         duration : videoFile.duration,
         isPublished: true,
-        owner: req.file?._id
+        owner: req.user._id
     })
 
     return res.status(200).json(new APIResponse(200, videoDetails, "Video published Successfully!"))
@@ -94,7 +84,7 @@ const getVideoById = asyncHandler(async (req, res) => {
         throw new APIError(404, "Video Not found")
 
     const video = await Video.findById(videoId)
-    return res(200).json(200, video, "Video found!")
+    return res(200).json(new APIResponse(200, video, "Video found!"))
 })
 
 const updateVideo = asyncHandler(async (req, res) => {
@@ -134,22 +124,15 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    if(!videoId)
-        throw new APIError(404, "Video Not Found")
+    if (!videoId) throw new APIError(400, "VideoId is required")
 
-    const video = await Video.findByIdAndUpdate(
-        videoId,
-        {
-            $set: {
-                isPublished: !isPublished
-            }
-        },
-        {
-            new: true
-        }
-    ).select("-isPublished")
+    const video = await Video.findById(videoId)
+    if (!video) throw new APIError(404, "Video not found")
 
-    return res.status(201).json(201, video , "Video Deleted Successfully!")
+    video.isPublished = !video.isPublished
+    await video.save()
+
+    return res.status(200).json(new APIResponse(200, video, "Publish status toggled successfully!"))
 })
 
 export {

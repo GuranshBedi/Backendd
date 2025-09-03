@@ -8,7 +8,7 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 const createPlaylist = asyncHandler(async (req, res) => {
     const {name, description} = req.body
 
-    if(!name || description)
+    if(!name || !description)
         throw new APIError(400, "Name and description is required")
 
     const playlist = await Playlist.create({
@@ -91,7 +91,7 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
         playlistId,
         {
             $pull: {
-                video: videoId
+                videos: videoId
             }
         },
         {
