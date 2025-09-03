@@ -8,7 +8,7 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 const createPlaylist = asyncHandler(async (req, res) => {
     const {name, description} = req.body
 
-    if(!(name || description))
+    if(!name || description)
         throw new APIError(400, "Name and description is required")
 
     const playlist = await Playlist.create({
@@ -61,7 +61,7 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
     if(!videoId)
         throw new APIError(404,"Video doesnt exist")
 
-    const playlist = await Playlist.findOneAndUpdate(
+    const playlist = await Playlist.findByIdAndUpdate(
         playlistId,
         {
             $addToSet: {
@@ -126,7 +126,7 @@ const updatePlaylist = asyncHandler(async (req, res) => {
         throw new APIError(404,"playlist not found")
 
 
-    const playlist = await Playlist.findOneAndUpdate(
+    const playlist = await Playlist.findByIdAndUpdate(
         playlistId,
         {
             $set: {
