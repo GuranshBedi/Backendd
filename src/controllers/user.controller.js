@@ -39,7 +39,6 @@ const registerUser = asyncHandler( async (req,res) => {
         throw new APIError(409, "User with same username or email exists")
     
     const avatarLocalPath = req.files?.avatar[0]?.path
-    // let coverLocalPath = req.files?.coverImage[0]?.path
 
     let coverImageLocalPath;
     if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0)
@@ -50,7 +49,7 @@ const registerUser = asyncHandler( async (req,res) => {
     }
 
     const avatar = await uploadOnCloudinary(avatarLocalPath)
-    const coverImage = await uploadOnCloudinary(coverLocalPath)
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
     if(!avatar){
         throw new APIError(400, "Avatar is required")
@@ -194,8 +193,8 @@ const changeCurrentPassword = asyncHandler( async(req,res) => {
 })
 
 const getCurrentUser = asyncHandler( async(req,res) => {
-    return res
-    .status(200,req.user,"User fetched successfully")
+    console.log(req.user)
+    return res.status(200).json(200, new APIResponse(200,req.user,"User fetched successfully"))
 })
 
 const updateAccountDetails = asyncHandler( async(req,res) => {
