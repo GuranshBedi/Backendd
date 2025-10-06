@@ -192,10 +192,18 @@ const changeCurrentPassword = asyncHandler( async(req,res) => {
 
 })
 
-const getCurrentUser = asyncHandler( async(req,res) => {
-    console.log(req.user)
-    return res.status(200).json(200, new APIResponse(200,req.user,"User fetched successfully"))
-})
+// good: explicit JSON response
+const getCurrentUser = asyncHandler(async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json(new APIError(400, "User fetching failed"));
+  }
+
+  // send only required fields if you want
+  const { _id, username, email, fullname, avatar, coverImage, createdAt, updatedAt } = req.user;
+  return res.status(200).json(new APIResponse(200, 
+    {username, email, fullname, avatar, coverImage},"User fetched Successfully"));
+});
+
 
 const updateAccountDetails = asyncHandler( async(req,res) => {
     const {fullname , email} = req.body
