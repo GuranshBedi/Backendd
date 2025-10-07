@@ -199,7 +199,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
   }
 
   // send only required fields if you want
-  const { _id, username, email, fullname, avatar, coverImage, createdAt, updatedAt } = req.user;
+  const { username, email, fullname, avatar, coverImage} = req.user;
   return res.status(200).json(new APIResponse(200, 
     {username, email, fullname, avatar, coverImage},"User fetched Successfully"));
 });
