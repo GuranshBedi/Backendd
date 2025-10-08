@@ -205,29 +205,46 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 });
 
 
-const updateAccountDetails = asyncHandler( async(req,res) => {
-    const {fullname , email} = req.body
+const updateAccountDetails = asyncHandler(async (req, res) => {
+  const { fullname, username, email } = req.body;
 
-    if(!fullname || !email)
-        throw new APIError(400, "All fields are required!")
+  if (!fullname || !username || !email) {
+    throw new APIError(400, "All fields are required!");
+  }
+  const trimmedName = fullname.trim();
+  const trimmedUsername = username.trim();
+  const trimmedEmail = email.trim().toLowerCase();
+  const existingByEmail = await User.findOne({ email: trimmedEmail, _id: { $ne: req.user?._id } });
+  if (existingByEmail) {
+    throw new APIError(409, "Email is already in use");
+  }
 
-    const user = await User.findByIdAndUpdate(
-        req.user?._id,
-        {
-            $set: {
-                fullname,
-                email: email //both formatsare correct
-            }
-        },
-        {
-            new:true
-        }
-    ).select("-password")
+  const existingByUsername = await User.findOne({ username: trimmedUsername, _id: { $ne: req.user?._id } });
+  if (existingByUsername) {
+    throw new APIError(409, "Username is already in use");
+  }
 
-    return res.status(200)
-    .json(new APIResponse(200,user,"User credentials updated successfully"))
+  const updated = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        name: trimmedName,
+        username: trimmedUsername,
+        email: trimmedEmail,
+      },
+    },
+    {
+      new: true
+    }
+  ).select("-password");
 
-})
+  if (!updated) {
+    throw new APIError(404, "User not found");
+  }
+
+  return res.status(200).json(new APIResponse(200, updated, "User credentials updated successfully"));
+});
+
 
 const updateAvatar = asyncHandler( async(req,res) => {
     const avatarLocalPath = req?.file.path
