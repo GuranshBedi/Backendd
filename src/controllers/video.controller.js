@@ -7,7 +7,18 @@ import {uploadOnCloudinary} from "../utils/cloudinary.js"
 
 
 const getAllVideos = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, query, sortBy = "createdAt", sortType = "desc", userId } = req.query;
+  const {
+    page = 1,
+    limit = 10,
+    query,
+    sortBy = "createdAt",
+    sortType = "desc",
+    userId,
+    all,
+  } = req.query;
+
+  console.log("[getAllVideos] called with:", req.query);
+
 
   const filter = {};
 
@@ -18,35 +29,40 @@ const getAllVideos = asyncHandler(async (req, res) => {
     ];
   }
 
-  if (userId) {
-    filter.owner = userId;
+  if (userId && mongoose.isValidObjectId(userId)) {
+    filter.owner = new mongoose.Types.ObjectId(userId);
   }
 
   const sortOptions = {};
-  sortOptions[sortBy] = sortType === "asc" || sortType === "1" ? 1 : -1;
+  sortOptions[sortBy] =
+    sortType === "asc" || sortType === "1" ? 1 : -1;
 
+  // "all" param lets us fetch everything (no pagination)
+  const wantAll = all === "true" || Number(limit) === 0;
   const skip = (page - 1) * limit;
 
+  const queryBuilder = Video.find(filter)
+    .sort(sortOptions)
+    .select("-videoFile");
+
+  if (!wantAll) queryBuilder.skip(skip).limit(Number(limit));
+
   const [videos, total] = await Promise.all([
-    Video.find(filter)
-      .sort(sortOptions)
-      .skip(skip)
-      .limit(Number(limit))
-      .select("-videoFile"),
+    queryBuilder.exec(),
     Video.countDocuments(filter),
   ]);
 
-  const totalPages = Math.ceil(total / limit);
+  const totalPages = wantAll ? 1 : Math.ceil(total / limit);
 
   return res.status(200).json(
-    new APIResponse(200, {
-      videos,
-      total,
-      totalPages,
-      page: Number(page),
-    }, "Videos fetched successfully")
+    new APIResponse(
+      200,
+      { videos, total, totalPages, page: Number(page) },
+      "Videos fetched successfully"
+    )
   );
 });
+
 
 
 const publishAVideo = asyncHandler(async (req, res) => {
