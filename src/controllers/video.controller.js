@@ -7,76 +7,83 @@ import {uploadOnCloudinary} from "../utils/cloudinary.js"
 
 
 const getAllVideos = asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
-    const filter = {}
-    if (query) {
-        filter.$or = [
-            { 
-                title: { $regex: query, $options: "i" } 
-            }, 
-            { 
-                description: { $regex: query, $options: "i" } 
-            }
-        ]
-    }
-    if (userId)
-        filter.owner = userId
+  const { page = 1, limit = 10, query, sortBy = "createdAt", sortType = "desc", userId } = req.query;
 
-    const sortOptions = {}
-    sortOptions[sortBy] = sortType === "asc" || sortType === "1" ? 1 : -1
+  const filter = {};
 
-    const skip = (page - 1) * limit
+  if (query) {
+    filter.$or = [
+      { title: { $regex: query, $options: "i" } },
+      { description: { $regex: query, $options: "i" } },
+    ];
+  }
 
-    const [videos, total] = await Promise.all([
-        Video.find(filter)
-            .sort(sortOptions)
-            .skip(skip)
-            .limit(Number(limit))
-            .select("-videoFile"),
-        Video.countDocuments(filter)
-    ])
+  if (userId) {
+    filter.owner = userId;
+  }
 
-    const totalPages = Math.ceil(total / limit)
+  const sortOptions = {};
+  sortOptions[sortBy] = sortType === "asc" || sortType === "1" ? 1 : -1;
 
-    res.status(200).json(new APIResponse(200,{},"Videos fetched Successfully"))
-})
+  const skip = (page - 1) * limit;
+
+  const [videos, total] = await Promise.all([
+    Video.find(filter)
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(Number(limit))
+      .select("-videoFile"),
+    Video.countDocuments(filter),
+  ]);
+
+  const totalPages = Math.ceil(total / limit);
+
+  return res.status(200).json(
+    new APIResponse(200, {
+      videos,
+      total,
+      totalPages,
+      page: Number(page),
+    }, "Videos fetched successfully")
+  );
+});
+
 
 const publishAVideo = asyncHandler(async (req, res) => {
-    const { title, description} = req.body
-    
-    const video = await Video.findOne({
-        $or: [{title , description}]
-    })
-    
-    if(!video)
-        throw new APIError(404,"Video not Found")
+  const { title, description } = req.body;
 
-    const videoLocalPath = req.files?.videoFile[0].path
-    const thumbnailLocalPath = req.file?.thumbnail.path
+  if (!title || !description) {
+    throw new APIError(400, "Title and description are required");
+  }
 
-    if(!videoLocalPath)
-        throw new APIError(400, "Video is required")
-    if(!thumbnailLocalPath)
-        throw new APIError(400, "Video is required")
+  const videoLocalPath = req.files?.videoFile?.[0]?.path;
+  const thumbnailLocalPath = req.files?.thumbnail?.[0]?.path;
 
-    const videoFile = await uploadOnCloudinary(videoLocalPath)
-    const thumbnail = await uploadOnCloudinary(thumbnailLocalPath)
+  if (!videoLocalPath) throw new APIError(400, "Video file is required");
+  if (!thumbnailLocalPath) throw new APIError(400, "Thumbnail file is required");
 
-    if(!videoFile)
-        throw new APIError(400, "Video is required")
+  const videoFile = await uploadOnCloudinary(videoLocalPath);
+  const thumbnailFile = await uploadOnCloudinary(thumbnailLocalPath);
 
-    const videoDetails = await Video.create({
-        videoFile: videoFile.url,
-        thumbnail : thumbnail.url,
-        title,
-        description,
-        duration : videoFile.duration,
-        isPublished: true,
-        owner: req.user._id
-    })
+  if (!videoFile?.url) throw new APIError(500, "Failed to upload video");
+  if (!thumbnailFile?.url) throw new APIError(500, "Failed to upload thumbnail");
 
-    return res.status(200).json(new APIResponse(200, videoDetails, "Video published Successfully!"))
-})
+  const videoDetails = await Video.create({
+    videoFile: videoFile.url,
+    thumbnail: thumbnailFile.url,
+    title,
+    description,
+    duration: videoFile.duration || 0,
+    isPublished: true,
+    owner: req.user._id,
+  });
+
+  return res
+    .status(201)
+    .json(new APIResponse(201, videoDetails, "Video published successfully"));
+});
+
+
 
 const getVideoById = asyncHandler(async (req, res) => {
     const { videoId } = req.params
@@ -84,6 +91,8 @@ const getVideoById = asyncHandler(async (req, res) => {
         throw new APIError(404, "Video Not found")
 
     const video = await Video.findById(videoId)
+    if(!video)
+        throw new APIError(400, "Video doesnt exist")
     return res(200).json(new APIResponse(200, video, "Video found!"))
 })
 
@@ -117,6 +126,8 @@ const deleteVideo = asyncHandler(async (req, res) => {
         throw new APIError(404, "Video Not Found")
 
     const video = await Video.findByIdAndDelete(videoId)
+    if(!video)
+        throw new APIError(404, "video doesnt exist!")
 
     return res.status(201).json(201, video , "Video Deleted Successfully!")
 
