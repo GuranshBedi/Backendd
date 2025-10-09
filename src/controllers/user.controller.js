@@ -198,7 +198,6 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     return res.status(401).json(new APIError(400, "User fetching failed"));
   }
 
-  // send only required fields if you want
   const { username, email, fullname, avatar, coverImage} = req.user;
   return res.status(200).json(new APIResponse(200, 
     {username, email, fullname, avatar, coverImage},"User fetched Successfully"));
@@ -228,7 +227,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     req.user?._id,
     {
       $set: {
-        name: trimmedName,
+        fullname: trimmedName,
         username: trimmedUsername,
         email: trimmedEmail,
       },
